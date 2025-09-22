@@ -1,5 +1,6 @@
 package swd.billiardshop.exception;
 
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -7,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import swd.billiardshop.exception.ErrorCode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +22,7 @@ public class GlobalExceptionHandler {
                 ex.getErrorCode().getCode(),
                 ex.getMessage()
         );
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(response, ex.getErrorCode().getHttpStatus());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -29,26 +31,28 @@ public class GlobalExceptionHandler {
         if (ex.getMessage() != null && ex.getMessage().contains("Content-Type")) {
             message = "Unsupported Content-Type. Please use 'application/json'.";
         }
-        ErrorResponse response = new ErrorResponse(9001, message);
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        ErrorResponse response = new ErrorResponse(ErrorCode.INVALID_REQUEST.getCode(), message);
+        return new ResponseEntity<>(response, ErrorCode.INVALID_REQUEST.getHttpStatus());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         ErrorResponse response = new ErrorResponse(
-                9999,
+                ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
                 "Internal server error: " + ex.getMessage()
         );
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(response, ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             errors.put(error.getField(), error.getDefaultMessage());
         }
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        String message = "Validation failed: " + errors.toString();
+        ErrorResponse response = new ErrorResponse(ErrorCode.INVALID_REQUEST.getCode(), message);
+        return new ResponseEntity<>(response, ErrorCode.INVALID_REQUEST.getHttpStatus());
     }
 
     static class ErrorResponse {

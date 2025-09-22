@@ -1,5 +1,8 @@
 package swd.billiardshop.service;
 
+import swd.billiardshop.exception.AppException;
+import swd.billiardshop.exception.ErrorCode;
+
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +40,7 @@ public class EmailService {
             helper.setText(htmlContent, true);
             javaMailSender.send(message);
         } catch (MessagingException e) {
-            throw new RuntimeException("Gửi email thất bại: " + e.getMessage());
+            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR, "Failed to send email: " + e.getMessage());
         }
     }
 
@@ -57,7 +60,7 @@ public class EmailService {
 
             javaMailSender.send(message);
         } catch (MessagingException e) {
-            throw new RuntimeException("Gửi email thất bại: " + e.getMessage());
+            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR, "Failed to send email: " + e.getMessage());
         }
     }
 

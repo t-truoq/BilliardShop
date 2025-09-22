@@ -34,10 +34,20 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/public/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                // Public endpoints
+                .requestMatchers("/api/public/**", "/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+
+                // Admin endpoints: chỉ ADMIN
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/v1/**").authenticated()
-                .anyRequest().permitAll()
+
+                // Staff endpoints: STAFF hoặc ADMIN
+                .requestMatchers("/api/staff/**").hasAnyRole("STAFF", "ADMIN")
+
+                // User endpoints: USER, STAFF, ADMIN
+                .requestMatchers("/api/user/**").hasAnyRole("USER", "STAFF", "ADMIN")
+
+                // Các request khác: yêu cầu xác thực
+                .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
