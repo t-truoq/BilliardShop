@@ -9,7 +9,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "categories")
+@Table(name = "categories", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_categories_slug", columnNames = {"slug"}),
+    @UniqueConstraint(name = "uk_categories_parent_name", columnNames = {"parent_id", "name"})
+})
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,6 +30,9 @@ public class Category {
     @Column(length = 255)
     private String imageUrl;
 
+    @Column(length = 255)
+    private String imagePublicId;
+
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Category parent;
@@ -41,4 +47,8 @@ public class Category {
     private LocalDateTime createdAt = LocalDateTime.now();
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
+    
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private User createdBy;
 }
