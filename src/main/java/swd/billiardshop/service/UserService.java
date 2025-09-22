@@ -45,14 +45,31 @@ public class UserService {
    
     private final VerificationTokenRepository tokenRepository;
 
+    @Transactional
     public UserResponse register(UserRegisterRequest request) {
+        // Kiểm tra username và email đã tồn tại
         if (userRepository.findByUsername(request.getUsername()).isPresent() ||
-            userRepository.findByEmail(request.getEmail()).isPresent()) {
+                userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new AppException(ErrorCode.INVALID_REQUEST, "Username or email already exists");
         }
+
+        // Tạo user mới
         User user = userMapper.toUser(request);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setStatus(Status.ACTIVE); // Hoặc Status.INACTIVE nếu muốn user phải verify email mới active
+
+        // Lưu user vào database
         userRepository.save(user);
+
+        try {
+            // Tự động gửi email verification sau khi đăng ký thành công
+            requestEmailVerification(user.getEmail());
+        } catch (Exception e) {
+            // Log lỗi nhưng không throw exception để không ảnh hưởng đến quá trình đăng ký
+            // Có thể sử dụng logger để ghi log
+            System.err.println("Failed to send verification email: " + e.getMessage());
+        }
+
         return userMapper.toUserResponse(user);
     }
 
@@ -61,10 +78,23 @@ public class UserService {
         if (userOpt.isEmpty() || !passwordEncoder.matches(request.getPassword(), userOpt.get().getPasswordHash())) {
             throw new AppException(ErrorCode.UNAUTHORIZED, "Invalid username or password");
         }
+
         User user = userOpt.get();
+
+        // Kiểm tra trạng thái banned
         if (user.getStatus() == Status.BANNED) {
             throw new AppException(ErrorCode.FORBIDDEN, "Account is banned");
         }
+
+        // Kiểm tra email verification
+        if (user.getEmailVerifiedAt() == null && user.getRole() != Role.ADMIN) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Email not verified. Please verify your email before logging in.");
+        }
+
+        // Cập nhật lastLoginAt
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
         return jwtUtil.generateToken(user.getUsername(), user.getRole().name(), user.getUserId());
     }
 

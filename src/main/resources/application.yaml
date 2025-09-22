@@ -18,12 +18,14 @@ spring:
     username: ${DBMS_USERNAME}
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         jdbc:
           time_zone: Asia/Ho_Chi_Minh
+  flyway:
+    enabled: false
   jackson:
     time-zone: Asia/Ho_Chi_Minh
     date-format: yyyy-MM-dd HH:mm:ss
