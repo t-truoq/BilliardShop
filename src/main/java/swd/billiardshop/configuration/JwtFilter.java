@@ -14,6 +14,9 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.beans.factory.annotation.Autowired;
+import swd.billiardshop.repository.UserRepository;
+import swd.billiardshop.enums.Status;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -24,6 +27,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private UserRepository userRepository;
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
@@ -49,6 +54,21 @@ public class JwtFilter extends OncePerRequestFilter {
             String username = claims.getSubject();
             String role = claims.get("role", String.class);
             Integer userId = claims.get("userId", Integer.class);
+
+            // Check if user is banned in DB
+            try {
+                if (userId != null) {
+                    swd.billiardshop.entity.User u = userRepository.findById(userId).orElse(null);
+                    if (u != null && u.getStatus() == Status.BANNED) {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"code\": 403, \"message\": \"Account is banned\"}");
+                        return;
+                    }
+                }
+            } catch (Exception ex) {
+                // if repo check fails, continue with caution
+            }
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 User userDetails = new User(username, "", Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role)));

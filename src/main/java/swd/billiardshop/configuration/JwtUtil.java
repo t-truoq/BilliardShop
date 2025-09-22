@@ -1,5 +1,8 @@
 package swd.billiardshop.configuration;
 
+import swd.billiardshop.exception.AppException;
+import swd.billiardshop.exception.ErrorCode;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -101,7 +104,7 @@ public class JwtUtil {
 
     public String refreshToken(String token) {
         if (!canRefreshToken(token)) {
-            throw new RuntimeException("Token cannot be refreshed");
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Token cannot be refreshed");
         }
         Claims claims = Jwts.parser()
                 .setSigningKey(Base64.getEncoder().encodeToString(secret.getBytes()))

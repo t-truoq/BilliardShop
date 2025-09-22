@@ -1,5 +1,8 @@
 package swd.billiardshop.configuration;
 
+import swd.billiardshop.exception.AppException;
+import swd.billiardshop.exception.ErrorCode;
+
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
 
@@ -37,7 +40,7 @@ public class VnPayConfiguration {
     public static String hmacSHA512(final String key, final String data) {
         try {
             if (key == null || data == null) {
-                throw new NullPointerException();
+                throw new AppException(ErrorCode.INVALID_REQUEST, "Key or data for HMAC cannot be null");
             }
             final Mac hmac512 = Mac.getInstance("HmacSHA512");
             byte[] hmacKeyBytes = key.getBytes(StandardCharsets.UTF_8);

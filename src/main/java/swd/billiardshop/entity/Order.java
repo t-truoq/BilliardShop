@@ -47,6 +47,10 @@ public class Order {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String shippingAddress;
 
+    @ManyToOne
+    @JoinColumn(name = "address_id")
+    private Address address;
+
     @Column(length = 50)
     private String shippingMethod;
 
