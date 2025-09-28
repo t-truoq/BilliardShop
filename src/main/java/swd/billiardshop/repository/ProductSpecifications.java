@@ -1,8 +1,7 @@
-package swd.billiardshop.repository.spec;
+package swd.billiardshop.repository;
 
 import org.springframework.data.jpa.domain.Specification;
 import swd.billiardshop.entity.Product;
-import swd.billiardshop.entity.Category;
 
 import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;

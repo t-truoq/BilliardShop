@@ -8,7 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import swd.billiardshop.exception.ErrorCode;
+import swd.billiardshop.dto.response.ApiResponse;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,59 +17,39 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(AppException.class)
-    public ResponseEntity<ErrorResponse> handleAppException(AppException ex) {
-        ErrorResponse response = new ErrorResponse(
-                ex.getErrorCode().getCode(),
-                ex.getMessage()
-        );
-        return new ResponseEntity<>(response, ex.getErrorCode().getHttpStatus());
+    public ResponseEntity<ApiResponse<Object>> handleAppException(AppException ex) {
+        ErrorCode ec = ex.getErrorCode();
+        ApiResponse<Object> response = (ex.getData() != null)
+                ? ApiResponse.error(ec, ex.getData())
+                : ApiResponse.error(ec);
+
+        HttpStatus status = ec.getHttpStatus();
+        return new ResponseEntity<>(response, status);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
-        String message = "Invalid request format: " + ex.getMessage();
+    public ResponseEntity<ApiResponse<Object>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        String message = "Invalid request format";
         if (ex.getMessage() != null && ex.getMessage().contains("Content-Type")) {
             message = "Unsupported Content-Type. Please use 'application/json'.";
         }
-        ErrorResponse response = new ErrorResponse(ErrorCode.INVALID_REQUEST.getCode(), message);
+        ApiResponse<Object> response = ApiResponse.error(ErrorCode.INVALID_REQUEST.getCode(), message);
         return new ResponseEntity<>(response, ErrorCode.INVALID_REQUEST.getHttpStatus());
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        ErrorResponse response = new ErrorResponse(
-                ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
-                "Internal server error: " + ex.getMessage()
-        );
-        return new ResponseEntity<>(response, ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus());
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             errors.put(error.getField(), error.getDefaultMessage());
         }
-        String message = "Validation failed: " + errors.toString();
-        ErrorResponse response = new ErrorResponse(ErrorCode.INVALID_REQUEST.getCode(), message);
+        ApiResponse<Object> response = ApiResponse.error(ErrorCode.INVALID_REQUEST, errors);
         return new ResponseEntity<>(response, ErrorCode.INVALID_REQUEST.getHttpStatus());
     }
 
-    static class ErrorResponse {
-        private final int code;
-        private final String message;
-
-        public ErrorResponse(int code, String message) {
-            this.code = code;
-            this.message = message;
-        }
-
-        public int getCode() {
-            return code;
-        }
-
-        public String getMessage() {
-            return message;
-        }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Object>> handleGenericException(Exception ex) {
+        ApiResponse<Object> response = ApiResponse.error(ErrorCode.INTERNAL_SERVER_ERROR.getCode(), "Internal server error");
+        return new ResponseEntity<>(response, ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus());
     }
 }

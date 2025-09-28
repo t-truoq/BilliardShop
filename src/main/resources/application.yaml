@@ -6,6 +6,19 @@ momo:
   redirect-url: ${MOMO_REDIRECT_URL}
   notify-url: ${MOMO_NOTIFY_URL}
 
+
+ghn:
+  token: ${GHN_TOKEN}
+  shop-id: ${GHN_SHOP_ID}
+  shop-phone: ${GHN_SHOP_PHONE}  # Sửa lại số đầy đủ 10 số
+  shop-address: ${GHN_SHOP_ADDRESS}
+  shop-district-id: ${GHN_SHOP_DISTRICT_ID}
+  shop-ward-id: ${GHN_SHOP_WARD_ID}
+  # Thêm các config mới:
+  api-url: ${GHN_API_URL:"https://dev-online-gateway.ghn.vn/shiip/public-api"}  # Base URL cho test
+  sync-enabled: true        # Bật auto-sync data
+  sync-on-startup: true     # Sync khi startup
+  cache-duration: 24        # Cache data trong 24h
 server:
   port: 8080
 

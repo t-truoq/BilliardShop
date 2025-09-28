@@ -14,7 +14,6 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 import swd.billiardshop.repository.UserRepository;
 import swd.billiardshop.enums.Status;
 

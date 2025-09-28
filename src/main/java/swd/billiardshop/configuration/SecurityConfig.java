@@ -25,9 +25,6 @@ import swd.billiardshop.repository.UserRepository;
 public class SecurityConfig {
     @Autowired
     private JwtFilter jwtFilter;
-    @Autowired
-    private UserRepository userRepository;
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -35,7 +32,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
-                .requestMatchers("/api/public/**", "/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/api/public/**", "/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html","/api/v1/shipments/**").permitAll()
 
                 // Admin endpoints: chỉ ADMIN
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
