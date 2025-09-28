@@ -157,8 +157,7 @@ public class ShipmentService {
                     it.put("price", oi.getUnitPrice() != null ? oi.getUnitPrice().longValue() : 0L);
 
                     // per-item weight: prefer product.weight (assumed grams), fallback to 500g
-            int perItemWeight = (ghnConfig != null && ghnConfig.getDefaultPerItemWeight() != null)
-                ? ghnConfig.getDefaultPerItemWeight() : 500;
+                    int perItemWeight = 500;
                     try {
                         if (oi.getProduct() != null && oi.getProduct().getWeight() != null) {
                             perItemWeight = oi.getProduct().getWeight().intValue();
@@ -196,19 +195,17 @@ public class ShipmentService {
         ghnReq.setItems(ghnItems);
         // Ensure weight > 0. If totalWeightGrams is 0 (no items or missing weights), fallback to at least 1 * 500g
         if (totalWeightGrams <= 0) {
-            int defaultPerItem = ghnConfig != null && ghnConfig.getDefaultPerItemWeight() != null ? ghnConfig.getDefaultPerItemWeight() : 500;
-            log.warn("Order {}: total weight computed as 0, falling back to default per-item weight {}g", order.getOrderNumber(), defaultPerItem);
+            log.warn("Order {}: total weight computed as 0, falling back to default per-item weight 500g", order.getOrderNumber());
             // try to derive approximate weight from number of items
             int fallbackCount = items.stream().mapToInt(it -> {
                 try { return Integer.parseInt(String.valueOf(it.getOrDefault("quantity", 1))); } catch (Exception e) { return 1; }
             }).sum();
             if (fallbackCount <= 0) fallbackCount = 1;
-            totalWeightGrams = fallbackCount * defaultPerItem;
+            totalWeightGrams = fallbackCount * 500;
         }
         ghnReq.setWeight(totalWeightGrams);
-        // GHN requires required_note. Use configured default
-        String reqNote = ghnConfig != null && ghnConfig.getDefaultRequiredNote() != null ? ghnConfig.getDefaultRequiredNote() : "KHONGCHOXEMHANG";
-        ghnReq.setRequiredNote(reqNote);
+        // GHN requires required_note. Use conservative default "KHONGCHOXEMHANG" (do not allow buyer to inspect)
+        ghnReq.setRequiredNote("KHONGCHOXEMHANG");
         ghnReq.setLength(20);
         ghnReq.setWidth(15);
         ghnReq.setHeight(10);

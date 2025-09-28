@@ -364,7 +364,7 @@ public class OrderService {
         resp.setDiscountAmount(order.getDiscountAmount());
         resp.setTotalAmount(order.getTotalAmount());
         resp.setShippingMethod(order.getShippingMethod());
-    resp.setNotes(order.getNotes());
+        resp.setNotes(order.getNotes());
         resp.setAdminNotes(order.getAdminNotes());
         resp.setCreatedAt(order.getCreatedAt());
         resp.setConfirmedAt(order.getConfirmedAt());
@@ -374,13 +374,6 @@ public class OrderService {
 
         resp.setItems(items.stream().map(this::buildOrderItemResponse).collect(Collectors.toList()));
         resp.setTotalItems(items.stream().mapToInt(OrderItem::getQuantity).sum());
-        // attach shipment info from ShipmentService (which is backed by GHN responses)
-        if (shippingService != null) {
-            try {
-                swd.billiardshop.dto.response.ShipmentResponse sh = shippingService.getShipmentByOrderId(order.getOrderId());
-                resp.setShipment(sh);
-            } catch (Exception ignored) {}
-        }
         return resp;
     }
 

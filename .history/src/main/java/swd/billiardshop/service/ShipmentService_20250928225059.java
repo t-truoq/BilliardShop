@@ -43,9 +43,6 @@ public class ShipmentService {
     @Autowired
     private swd.billiardshop.repository.OrderItemRepository orderItemRepository;
 
-    @Autowired
-    private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
-
     public BigDecimal calculateShippingFee(String shippingMethod, swd.billiardshop.entity.Address address, List<CartItemResponse> items) {
         GHNShippingFeeRequest req = new GHNShippingFeeRequest();
         req.setFromDistrictId(ghnConfig.getShopDistrictId());
@@ -157,8 +154,7 @@ public class ShipmentService {
                     it.put("price", oi.getUnitPrice() != null ? oi.getUnitPrice().longValue() : 0L);
 
                     // per-item weight: prefer product.weight (assumed grams), fallback to 500g
-            int perItemWeight = (ghnConfig != null && ghnConfig.getDefaultPerItemWeight() != null)
-                ? ghnConfig.getDefaultPerItemWeight() : 500;
+                    int perItemWeight = 500;
                     try {
                         if (oi.getProduct() != null && oi.getProduct().getWeight() != null) {
                             perItemWeight = oi.getProduct().getWeight().intValue();
@@ -194,21 +190,7 @@ public class ShipmentService {
         @SuppressWarnings({"unchecked","rawtypes"})
         java.util.List<Object> ghnItems = (java.util.List) items;
         ghnReq.setItems(ghnItems);
-        // Ensure weight > 0. If totalWeightGrams is 0 (no items or missing weights), fallback to at least 1 * 500g
-        if (totalWeightGrams <= 0) {
-            int defaultPerItem = ghnConfig != null && ghnConfig.getDefaultPerItemWeight() != null ? ghnConfig.getDefaultPerItemWeight() : 500;
-            log.warn("Order {}: total weight computed as 0, falling back to default per-item weight {}g", order.getOrderNumber(), defaultPerItem);
-            // try to derive approximate weight from number of items
-            int fallbackCount = items.stream().mapToInt(it -> {
-                try { return Integer.parseInt(String.valueOf(it.getOrDefault("quantity", 1))); } catch (Exception e) { return 1; }
-            }).sum();
-            if (fallbackCount <= 0) fallbackCount = 1;
-            totalWeightGrams = fallbackCount * defaultPerItem;
-        }
         ghnReq.setWeight(totalWeightGrams);
-        // GHN requires required_note. Use configured default
-        String reqNote = ghnConfig != null && ghnConfig.getDefaultRequiredNote() != null ? ghnConfig.getDefaultRequiredNote() : "KHONGCHOXEMHANG";
-        ghnReq.setRequiredNote(reqNote);
         ghnReq.setLength(20);
         ghnReq.setWidth(15);
         ghnReq.setHeight(10);
@@ -219,14 +201,6 @@ public class ShipmentService {
         try {
             if (order.getPaymentStatus() != null && order.getPaymentStatus() == swd.billiardshop.enums.PaymentStatus.PENDING) {
                 if (order.getTotalAmount() != null) ghnReq.setCodAmount(order.getTotalAmount().longValue());
-            }
-        } catch (Exception ignored) {}
-
-        // Log the payload sent to GHN for debugging (debug level)
-        try {
-            if (log.isDebugEnabled()) {
-                String payload = objectToJson(ghnReq);
-                log.debug("Calling GHN create order with payload: {}", payload);
             }
         } catch (Exception ignored) {}
 
@@ -261,14 +235,6 @@ public class ShipmentService {
 
         s = shipmentRepository.save(s);
         return buildShipmentResponse(s);
-    }
-
-    private String objectToJson(Object o) {
-        try {
-            return objectMapper.writeValueAsString(o);
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     public void cancelShipment(Integer orderId) {
