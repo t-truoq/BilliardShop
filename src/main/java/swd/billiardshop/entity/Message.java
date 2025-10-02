@@ -17,11 +17,11 @@ public class Message {
     private Integer messageId;
 
     @ManyToOne
-    @JoinColumn(name = "room_id")
+    @JoinColumn(name = "room_id", nullable = false)
     private ChatRoom room;
 
     @ManyToOne
-    @JoinColumn(name = "sender_id")
+    @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
 
     @Enumerated(EnumType.STRING)
@@ -29,7 +29,7 @@ public class Message {
     @Builder.Default
     private MessageType messageType = MessageType.TEXT;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
     @Column(length = 255)
@@ -40,6 +40,7 @@ public class Message {
 
     @Builder.Default
     private Boolean isRead = false;
+
     private LocalDateTime readAt;
 
     @Builder.Default

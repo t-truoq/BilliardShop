@@ -28,25 +28,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/api/public/**", "/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html","/api/v1/shipments/**").permitAll()
-
-                // Admin endpoints: chỉ ADMIN
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                // Staff endpoints: STAFF hoặc ADMIN
-                .requestMatchers("/api/staff/**").hasAnyRole("STAFF", "ADMIN")
-
-                // User endpoints: USER, STAFF, ADMIN
-                .requestMatchers("/api/user/**").hasAnyRole("USER", "STAFF", "ADMIN")
-
-                // Các request khác: yêu cầu xác thực
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ENABLE CORS
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/public/**", "/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html","/api/v1/shipments/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/ws/**","/app/**","/topic/**","/queue/**").permitAll()
+                        .requestMatchers("/api/staff/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers("/api/user/**").hasAnyRole("USER", "STAFF", "ADMIN")
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
     @Bean
@@ -75,13 +68,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOriginPattern("http://localhost:[*]");
-        configuration.addAllowedOriginPattern("https://*.ngrok-free.app");
-        configuration.addAllowedOriginPattern("http://localhost:8080");
+        configuration.addAllowedOriginPattern("*");
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
+        configuration.addExposedHeader("Authorization");
+        configuration.addExposedHeader("Content-Type");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
