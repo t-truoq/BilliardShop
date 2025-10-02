@@ -17,7 +17,7 @@ public class ChatRoom {
     private Integer roomId;
 
     @ManyToOne
-    @JoinColumn(name = "customer_id")
+    @JoinColumn(name = "customer_id", nullable = false)
     private User customer;
 
     @ManyToOne
@@ -33,6 +33,7 @@ public class ChatRoom {
 
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 }
